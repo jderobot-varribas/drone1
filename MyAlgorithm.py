@@ -2,6 +2,7 @@ import math
 import jderobot
 import cv2
 import numpy as np
+import rectification
 
 
 class MyAlgorithm:
@@ -12,8 +13,10 @@ class MyAlgorithm:
     def execute(self):
         img = self.sensor.getImage();
         if img is not None:
-            print "Image is: %s, %s"%(str(img.shape),str(img.dtype))
+            #print "Image is: %s, %s"%(str(img.shape),str(img.dtype))
             self.debugImg(img)
+
+            rectification.run_example(img)
 
     def debugImg(self, img): pass
     """ Decouple Qt SIGNAL by something like abstract function.

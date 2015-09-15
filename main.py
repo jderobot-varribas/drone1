@@ -50,3 +50,4 @@ if __name__ == '__main__':
         app.exec_()
     else:
         t2.join()
+

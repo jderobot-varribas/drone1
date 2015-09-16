@@ -50,6 +50,9 @@ def run_example(img):
 
     ## Obtain perspective transform via OpenCV:
     tf = cv2.getPerspectiveTransform(points.astype(np.float32), ref_points.astype(np.float32))
+    tf = calculePerspectiveTransform(points.reshape((4,2)), ref_points.reshape((4,2)))
+    print 'points=',points
+    print 'ref_points=',ref_points
     print 'tf=',tf
 
     ## Apply transform
@@ -114,3 +117,24 @@ class ClickGUIcv(threading.Thread):
     def showImage(self):
         cv2.imshow(self.win_name, self.img)
         cv2.waitKey(1)
+
+
+""" See https://gist.github.com/varhub/31384c6721e04d9d9210 """
+def calculePerspectiveTransform(pO, pD):
+    n = pO.shape[0]
+    assert pO.shape == pD.shape
+    assert n >= 4
+
+    A = np.zeros((2*n,9))
+    for i in range(0,n):
+        (x1,y1) = (pO[i][0], pO[i][1])
+        (x2,y2) = (pD[i][0], pD[i][1])
+
+        A[2*i  ] = [x1,y1,1, 0, 0, 0, -x2*x1, -x2*y1, -x2]
+        A[2*i+1] = [0, 0, 0, x1,y1,1, -y2*x1, -y2*y1, -y2]
+
+    U,S,V = np.linalg.svd(A)
+    H = V[-1].reshape((3,3))
+    H = H/H[2,2]
+
+    return H

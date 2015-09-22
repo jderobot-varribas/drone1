@@ -45,6 +45,7 @@ if __name__ == '__main__':
     if USE_GUI:
         app = QtGui.QApplication(sys.argv)
         imageDisplay = minimal_gui.ImgDisplay()
+        minimal_gui.enable_qimshow(app)
         algorithm.debugImg = lambda(img): imageDisplay.Q_SIGNAL_ImageUpdate.emit(img)
 
         app.exec_()

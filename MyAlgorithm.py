@@ -31,6 +31,7 @@ class MyAlgorithm:
 
             # Mark detection
             detect1(img)
+            detect2(img)
 
     def debugImg(self, img): pass
     """ Decouple Qt SIGNAL by something like abstract function.
@@ -81,3 +82,85 @@ def detect1(img):
         cv2.circle(img_poly, (x+cx,y+cy), 2, (0,0,255), -1)
 
     imshow("d1:arrow vertex", img_poly)
+
+
+## Yellow corners
+HSV_Y_low = (27,140, 50)
+HSV_Y_upp = (33,255,150)
+
+def detect2(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    mask = cv2.inRange(hsv, HSV_Y_low, HSV_Y_upp)
+    imshow("d2:mask", mask.astype(np.uint8))
+
+    ''' median blur to drop salt noise
+    dilate op. to avoidmedian cutoff '''
+    k_cross = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
+    mask = cv2.dilate(mask, k_cross)
+    imshow("d2:dilate", mask)
+    mask = cv2.medianBlur(mask, 3)
+    imshow("d2:median", mask)
+
+    img_poly = img.copy()
+
+    detected_corners = []
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    for contour in contours:
+        ''' center from perimeter '''
+        m = cv2.moments(contour)
+        m00 = m['m00']
+        if m00 > 0:
+            cx = int(m['m10']/m00)
+            cy = int(m['m01']/m00)
+            cv2.circle(img_poly, (cx,cy), 3, (0,0,255), -1)
+            detected_corners.append( (cx,cy) )
+    imshow("d2:yellow corners", img_poly)
+
+    ''' group marks '''
+    print 'yellow corners detected:', len(detected_corners)
+    if len(detected_corners) >= 4:
+        take4 = detected_corners[0:4]
+        ''' sort it
+        use (0,0) distance to known tl and br points'''
+        tld = np.Inf
+        brd = 0
+        img_poly = img_poly.copy()
+        for point in take4:
+            cv2.circle(img_poly, point, 3, (255,0,0), -1)
+            d = np.linalg.norm(point)
+            if d<tld:
+                tld=d,
+                tl=point
+            if d>brd:
+                brd=d
+                br=point
+        take4.remove(tl)
+        take4.remove(br)
+
+        cv2.line(img_poly, tl, br, (0,255,255))
+        imshow("d2:points", img_poly)
+
+        ''' use cross-product to detect side position '''
+        for pt in take4:
+            v1 = (br[0]-tl[0], br[1]-tl[1], 0)
+            v2 = (pt[0]-tl[0], pt[1]-tl[1], 0)
+            sign = np.cross(v1,v2)[2]
+            if sign < 0:
+                ne=pt
+            else:
+                po=pt
+
+        return
+        """ ne or po can be undefined. This is due:
+        1) 4 selected points could be bad (impossible configuration)
+        2) distance to (0,0) is not 100% stable to perspective nor rotations (like roll)
+        """
+
+        sorted = np.array([ tl, po, br, ne ])
+        ref = np.array([ (0,0), (0,100), (100,100), (100,0) ])
+
+        tf = rectification.calculePerspectiveTransform(sorted, ref)
+        img_rect = cv2.warpPerspective(img, tf, (100,100))
+
+        imshow("d2:rectified", img_rect)
+

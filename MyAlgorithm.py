@@ -3,7 +3,7 @@ import jderobot
 import cv2
 import numpy as np
 import rectification
-import gui.minimal_gui as qtui
+from gui.qtimshow import imshow
 
 
 class MyAlgorithm:
@@ -26,8 +26,8 @@ class MyAlgorithm:
             mask = cv2.inRange(hsv, HSV_GY_low, HSV_GY_upp)
             img_out = cv2.bitwise_and(img, img, mask=mask)
 
-            qtui.qimshow(mask, "mask", qtui.QImage.Format_Indexed8)
-            qtui.qimshow(img_out, "filtered")
+            imshow("mask", mask)
+            imshow("filtered", img_out)
 
     def debugImg(self, img): pass
     """ Decouple Qt SIGNAL by something like abstract function.

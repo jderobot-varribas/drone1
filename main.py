@@ -27,7 +27,7 @@ if "--no-gui" in sys.argv:
     USE_GUI=False
 
 if USE_GUI:
-    from gui import minimal_gui
+    from gui import minimal_gui, qtimshow
     from PyQt4 import QtGui
     import sys
 
@@ -45,8 +45,9 @@ if __name__ == '__main__':
     if USE_GUI:
         app = QtGui.QApplication(sys.argv)
         imageDisplay = minimal_gui.ImgDisplay()
-        minimal_gui.enable_qimshow(app)
+        qtimshow.enable()
         algorithm.debugImg = lambda(img): imageDisplay.Q_SIGNAL_ImageUpdate.emit(img)
+        #qtimshow.disable()
 
         app.exec_()
     else:

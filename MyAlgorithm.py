@@ -5,6 +5,8 @@ import numpy as np
 import rectification
 from gui.qtimshow import imshow
 
+import adrian_rosebrock
+
 
 class MyAlgorithm:
     def __init__(self, sensor):
@@ -19,6 +21,7 @@ class MyAlgorithm:
 
             #rectification.run_example(img)
 
+            '''
             HSV_GY_low = (28,10,0)
             HSV_GY_upp = (64,255,255)
 
@@ -28,10 +31,12 @@ class MyAlgorithm:
 
             imshow("mask", mask)
             imshow("filtered", img_out)
+            '''
 
             # Mark detection
-            detect1(img)
-            detect2(img)
+            #detect1(img)
+            #detect2(img)
+            detect3(img)
 
     def debugImg(self, img): pass
     """ Decouple Qt SIGNAL by something like abstract function.
@@ -164,3 +169,101 @@ def detect2(img):
 
         imshow("d2:rectified", img_rect)
 
+
+YELLOW_SEARCH_AREA_RATIO = 1.25 # it should not be a constant, but an 'aperture angle based' function
+
+def detect3(img, debug=True):
+    mark_list = detectGreenArrows(img)
+    if len(mark_list) == 0: return
+
+    if debug:
+        draw = img.copy()
+        for mark in mark_list:
+            cv2.drawContours(draw, [mark[2]], -1, (255,0,255))
+            cv2.circle(draw, mark[0], 2, (255,255,255), -1)
+
+            (x,y,w,h) = mark[1]
+            cv2.rectangle(draw, (x,y), (x+w,y+h), (100,100,100))
+            r = int(max(w,h)*YELLOW_SEARCH_AREA_RATIO)
+            cv2.circle(draw, mark[0], r, (255,255,255), 1)
+        imshow('d3: detectGreenArrows', draw)
+
+    corners_list = np.asarray(detectYellowCorners(img))
+    if len(corners_list) == 0: return
+
+    ''' marriage problem'''
+    count=0
+    for mark in mark_list:
+        count+=1; print 'mark[%d]'%(count)
+        center = np.asarray(mark[0])
+        radius = max(mark[1][2], mark[1][3])
+        radius = np.ceil(radius*YELLOW_SEARCH_AREA_RATIO)
+
+        diff = corners_list - center
+        dist = np.linalg.norm(diff, axis=1)
+        condition = dist < radius
+        passing = corners_list[condition] # or condition.nonzero()
+
+        print 'passing corners:',len(passing)
+
+        if debug:
+            for point in passing:
+                cv2.circle(draw, tuple(point), 2, (255,255,255), -1)
+            imshow('d3: detectCorners', draw)
+
+        if len(passing) >= 4:
+            sorted = adrian_rosebrock.order_points(passing[0:4])
+            scale=200
+            ref = np.array([ (0,0), (1,0), (1,1), (0,1) ])*scale
+
+            tf = rectification.calculePerspectiveTransform(sorted, ref)
+            img_rect = cv2.warpPerspective(img, tf, (scale,scale))
+
+            if debug:
+                for point in passing:
+                    cv2.circle(draw, tuple(point), 2, (255,255,255), -1)
+                imshow('d3: mark[%d]'%(count), img_rect)
+
+
+def detectGreenArrows(img):
+    mark_list = [] # as (center, bounding box, contour)
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    mask = cv2.inRange(hsv, HSV_G_low, HSV_G_upp)
+
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    for contour in contours:
+        ''' center from perimeter '''
+        m = cv2.moments(contour)
+        m00 = m['m00']
+        if m00 > 0:
+            cx = int(m['m10']/m00)
+            cy = int(m['m01']/m00)
+            desc = ( (cx,cy), cv2.boundingRect(contour), contour )
+            mark_list.append(desc)
+
+    return mark_list
+
+
+def detectYellowCorners(img):
+    detected_corners = []
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    mask = cv2.inRange(hsv, HSV_Y_low, HSV_Y_upp)
+
+    ''' median blur to drop salt noise
+    dilate op. to avoidmedian cutoff '''
+    k_cross = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
+    mask = cv2.dilate(mask, k_cross)
+    mask = cv2.medianBlur(mask, 3)
+
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    for contour in contours:
+        m = cv2.moments(contour)
+        m00 = m['m00']
+        if m00 > 0:
+            cx = int(m['m10']/m00)
+            cy = int(m['m01']/m00)
+            detected_corners.append( (cx,cy) )
+
+    return detected_corners

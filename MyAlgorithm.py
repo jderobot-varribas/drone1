@@ -46,8 +46,10 @@ class MyAlgorithm:
                 img_rect = cv2.warpPerspective(img, tf, tuple(ref_rect[2]+1))
 
                 direction, score = detection.mark_direction(img_rect)
-                text = "%s \n%.2f" %(detection.MarkType.names[direction], score)
-                cv2.putText(img_highlight, text, tuple(mark_center), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,255), 2)
+                text1 = detection.MarkType.names[direction]
+                text2 = "%.2f" %(score)
+                cv2.putText(img_highlight, text1, tuple(mark_center), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,100,255), 2)
+                cv2.putText(img_highlight, text2, tuple(mark_center+(0,12)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200,100,255), 2)
 
             imshow("recognized", img_highlight)
 

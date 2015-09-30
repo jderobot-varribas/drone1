@@ -3,6 +3,7 @@ import jderobot
 import cv2
 import numpy as np
 import rectification
+import detection
 from gui.qtimshow import imshow
 
 import adrian_rosebrock
@@ -37,6 +38,19 @@ class MyAlgorithm:
             #detect1(img)
             #detect2(img)
             marks = detect3(img, False)
+
+            img_highlight = img.copy()
+            for mark_center, mark_rect in marks:
+                ref_rect = adrian_rosebrock.rect_target_size(mark_rect)
+                tf = rectification.calculePerspectiveTransform(mark_rect, ref_rect)
+                img_rect = cv2.warpPerspective(img, tf, tuple(ref_rect[2]+1))
+
+                direction = detection.mark_direction(img_rect)
+                text = detection.MarkType.names[direction]
+                cv2.putText(img_highlight, text, tuple(mark_center), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,255), 2)
+
+            imshow("recognized", img_highlight)
+
 
     def debugImg(self, img): pass
     """ Decouple Qt SIGNAL by something like abstract function.

@@ -25,11 +25,13 @@ import similarity
 
 from gui.qtimshow import imshow
 
+""" Image is a PNG, so load it as BGRA to catch alpha channel
+Then, extract Alpha channel for maskerading purposes,
+and finally convert to JdeRobot RGB format.
+"""
 _IMAGE_PATH = "marks/arrow_mark.png"
 _IMAGE_REF = cv2.imread(_IMAGE_PATH, cv2.CV_LOAD_IMAGE_UNCHANGED)
 _IMAGE_REF_ALPHA = _IMAGE_REF[:,:, 3].copy()
-print _IMAGE_REF.shape
-print _IMAGE_REF_ALPHA.shape
 _IMAGE_REF = cv2.cvtColor(_IMAGE_REF, cv2.COLOR_BGRA2RGB)
 
 if _IMAGE_REF is None:
@@ -37,6 +39,11 @@ if _IMAGE_REF is None:
     raise Exception(msg)
 
 
+""" Ugly way of create a enum.
+enums are native supported since python 3.4, but see this [1] to gt full idea
+and custom ways to accomplish it
+[1] http://stackoverflow.com/questions/36932/how-can-i-represent-an-enum-in-python
+"""
 class MarkType:
     RIGHT=0
     LEFT=2
@@ -44,7 +51,7 @@ class MarkType:
     DOWN=3
 
     types=[RIGHT,UP,LEFT,DOWN]
-    names=['RIGHT','UP','LEFT','DOWN',]
+    names=['RIGHT','UP','LEFT','DOWN']
 
 
 def mark_direction(img):
@@ -66,4 +73,4 @@ def mark_direction(img):
 
         #imshow('ref[%s]'%(MarkType.names[mt]), _ref.copy())
 
-    return MarkType.types[np.argmax(scores)]
+    return MarkType.types[np.argmax(scores)], np.max(scores)

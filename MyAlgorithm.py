@@ -45,8 +45,8 @@ class MyAlgorithm:
                 tf = rectification.calculePerspectiveTransform(mark_rect, ref_rect)
                 img_rect = cv2.warpPerspective(img, tf, tuple(ref_rect[2]+1))
 
-                direction = detection.mark_direction(img_rect)
-                text = detection.MarkType.names[direction]
+                direction, score = detection.mark_direction(img_rect)
+                text = "%s \n%.2f" %(detection.MarkType.names[direction], score)
                 cv2.putText(img_highlight, text, tuple(mark_center), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,255), 2)
 
             imshow("recognized", img_highlight)
@@ -188,7 +188,8 @@ YELLOW_SEARCH_AREA_RATIO = 1.25 # it should not be a constant, but an 'aperture 
 
 def detect3(img, debug=True):
     mark_list = detectGreenArrows(img)
-    if len(mark_list) == 0: return
+    if len(mark_list) == 0:
+        return []
 
     if debug:
         draw = img.copy()
@@ -203,7 +204,8 @@ def detect3(img, debug=True):
         imshow('d3: detectGreenArrows', draw)
 
     corners_list = np.asarray(detectYellowCorners(img))
-    if len(corners_list) == 0: return
+    if len(corners_list) == 0:
+        return []
 
     ''' marriage problem'''
     marks_out = []

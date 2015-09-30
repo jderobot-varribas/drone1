@@ -28,10 +28,10 @@ def order_points(pts):
     # return the ordered coordinates
     return rect
 
-def four_point_transform(image, pts):
+
+def rect_target_size(rect):
     # obtain a consistent order of the points and unpack them
     # individually
-    rect = order_points(pts)
     (tl, tr, br, bl) = rect
 
     # compute the width of the new image, which will be the
@@ -59,9 +59,21 @@ def four_point_transform(image, pts):
         [maxWidth - 1, maxHeight - 1],
         [0, maxHeight - 1]], dtype = "float32")
 
+    return dst
+
+
+def four_point_transform(image, pts):
+    # obtain a consistent order of the points
+    rect = order_points(pts)
+    (tl, tr, br, bl) = rect
+
+    # compute the dimensions of the new image
+    dst = rect_target_size(rect)
+    (tl, tr, br, bl) = rect
+
     # compute the perspective transform matrix and then apply it
     M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+    warped = cv2.warpPerspective(image, M, br+1)
 
     # return the warped image
     return warped

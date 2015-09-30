@@ -36,7 +36,7 @@ class MyAlgorithm:
             # Mark detection
             #detect1(img)
             #detect2(img)
-            detect3(img)
+            marks = detect3(img, False)
 
     def debugImg(self, img): pass
     """ Decouple Qt SIGNAL by something like abstract function.
@@ -192,9 +192,10 @@ def detect3(img, debug=True):
     if len(corners_list) == 0: return
 
     ''' marriage problem'''
+    marks_out = []
     count=0
     for mark in mark_list:
-        count+=1; print 'mark[%d]'%(count)
+        count+=1; #print 'mark[%d]'%(count)
         center = np.asarray(mark[0])
         radius = max(mark[1][2], mark[1][3])
         radius = np.ceil(radius*YELLOW_SEARCH_AREA_RATIO)
@@ -204,7 +205,7 @@ def detect3(img, debug=True):
         condition = dist < radius
         passing = corners_list[condition] # or condition.nonzero()
 
-        print 'passing corners:',len(passing)
+        #print 'passing corners:',len(passing)
 
         if debug:
             for point in passing:
@@ -223,6 +224,10 @@ def detect3(img, debug=True):
                 for point in passing:
                     cv2.circle(draw, tuple(point), 2, (255,255,255), -1)
                 imshow('d3: mark[%d]'%(count), img_rect)
+
+            marks_out.append( (center, sorted) )
+
+    return marks_out
 
 
 def detectGreenArrows(img):

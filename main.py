@@ -31,7 +31,7 @@ if USE_GUI:
     from PyQt4 import QtGui
     import sys
 
-if __name__ == '__main__':
+if __name__ == '__main__' and False:
     sensor = Sensor()
     t1 = PeriodicThread(0.025, sensor.update)
     t1.setDaemon(True)
@@ -53,3 +53,8 @@ if __name__ == '__main__':
     else:
         t2.join()
 
+if __name__ == '__main__':
+    from sensors.sensorgps import SensorGPS
+    sensor = SensorGPS()
+    t1 = PeriodicThread(1, sensor.update)
+    t1.run()

@@ -37,7 +37,7 @@ class MyAlgorithm:
             # Mark detection
             #detect1(img)
             #detect2(img)
-            marks = detect3(img, False)
+            marks = detect3(img, True)
 
             img_highlight = img.copy()
             for mark_center, mark_rect in marks:
@@ -203,7 +203,7 @@ def detect3(img, debug=True):
             cv2.rectangle(draw, (x,y), (x+w,y+h), (100,100,100))
             r = int(max(w,h)*YELLOW_SEARCH_AREA_RATIO)
             cv2.circle(draw, mark[0], r, (255,255,255), 1)
-        imshow('d3: detectGreenArrows', draw)
+        #imshow('d3: detectGreenArrows', draw)
 
     corners_list = np.asarray(detectYellowCorners(img))
     if len(corners_list) == 0:
@@ -241,7 +241,7 @@ def detect3(img, debug=True):
             if debug:
                 for point in passing:
                     cv2.circle(draw, tuple(point), 2, (255,255,255), -1)
-                imshow('d3: mark[%d]'%(count), img_rect)
+                #imshow('d3: mark[%d]'%(count), img_rect)
 
             marks_out.append( (center, sorted) )
 
